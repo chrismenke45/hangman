@@ -1,0 +1,1 @@
+This is a ruby project to practice OOP and serialization.  The game has a save function which saves the game parameters as a JSON object to be opened later.

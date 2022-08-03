@@ -1,18 +1,19 @@
 require "./lib/save_game.rb"
 
 class Game
-  extend SaveGame
+  include SaveGame
 
-  def initialize(word)
+  def initialize(word, wrong_letters = [], correct_letters = [])
     @word = word
-    @show_word = "_" * word.length
-    @wrong_letters = []
-    @correct_letters = []
-    #puts word
+    #@show_word = "_" * word.length
+    @wrong_letters = wrong_letters
+    @correct_letters = correct_letters
+    update_show_word
   end
 
   def play
-    while @wrong_letters.length < 8 && @show_word.include?("_")
+    @current_save = false
+    while @wrong_letters.length < 8 && @show_word.include?("_") && !@current_save
       puts "*" * 30
       make_visual
       puts "Guess a letter!"
@@ -21,6 +22,8 @@ class Game
     end
     if @show_word == @word
       puts "You got it: #{@word}"
+    elsif @current_save
+      puts "Game saved and closed"
     else
       puts "So close! It was: #{@word} Try again later"
     end
@@ -43,10 +46,19 @@ class Game
     @show_word = @word.chars.map { |letter| @correct_letters.include?(letter) ? letter : "_" }.join("")
   end
 
+  def to_object
+    {
+      "word" => @word,
+      "wrong_letters" => @wrong_letters,
+      "correct_letters" => @correct_letters,
+    }
+  end
+
   def make_visual
     puts @show_word
-    @wrong_letters.length != 0 && (puts "Incorrect guesses: #{@wrong_letters}")
     @wrong_letters.length != 0 && (puts "you have #{8 - @wrong_letters.length} more tr#{@wrong_letters.length == 7 ? "y" : "ies"}")
+    puts "You can save your game with 'save'#{SaveGame.check_for_save ? ", but it will overide the current saved game" : ""}"
+    @wrong_letters.length != 0 && (puts "Incorrect guesses: #{@wrong_letters.join(" ")}")
   end
 
   def check_letter(letter)
@@ -66,6 +78,11 @@ class Game
           puts "You already guessed that letter, try another one"
           letter = gets.chomp
         end
+      elsif letter == "save"
+        #puts "yeehaw"
+        valid_input = true
+        @current_save = true
+        SaveGame.save_it(to_object)
       else
         puts "Oops! Please enter a single letter"
         letter = gets.chomp
